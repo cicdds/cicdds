@@ -12,6 +12,7 @@ if [[ -z ${script} ]]; then return 1; fi
 sed -i "" "/\[${script}\]/d" ${defaultConfigFile}
 sed -i "" "/^${script}_url/d" ${defaultConfigFile}
 sed -i "" "/^${script}_version/d" ${defaultConfigFile}
+sed -i "" "/^${script}_tap/d" ${defaultConfigFile}
 
 # 删除插件包
 rm -rf ${DIR}/scripts/${script}

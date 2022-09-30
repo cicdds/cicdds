@@ -7,7 +7,7 @@ defaultConfigFile=${DIR}/resources/plugin
 # 初始化配置文件
 if [[ ! -e ${defaultConfigFile} ]]; then
     touch ${defaultConfigFile}
-    echo "#am.data" > ${defaultConfigFile}
+    echo "#plugin" > ${defaultConfigFile}
 fi
 
 # 读取配置文件
