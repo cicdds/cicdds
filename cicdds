@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# since: 2021-03-30
+# author: gengxiankun <gengxiankun@126.com>
+# CI/CD 核心驱动脚本
+
+# 设置默认调试格式
+# export PS4='$0.$LINENO+ '
+export PS4='[\e[32mINFO\e[0m] $0+$LINENO: {${FUNCNAME[0]}} '
+# 设置红色的	ERROR 字样
+export ERROR="[\033[31mERROR\033[0m]"
+
+# 获取脚本文件所在目录
+SOURCE="$0"
+while [ -h "$SOURCE"  ]; do # resolve $SOURCE until the file is no longer a symlink
+    DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /*  ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+export DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
+
+# 帮助文档
+if [[ $1 == "help" ]]; then
+    scripts=`ls -1 ${DIR}/scripts/ | awk '{print "  "$1}'`
+
+    if [[ -n ${2} ]]; then
+        if echo "${scripts[@]}" | grep -w ${2} &>/dev/null; then
+            commands=`ls -1 ${DIR}/scripts/${2}/ | awk '{print "  "$1}'`
+            
+            cat <<-EOF
+usage: cicd.sh ${2} [ command ] [-t <type>] [-w <workspace>] [-e <extra>]
+
+Commands: 
+${commands//.sh}
+
+EOF
+        else
+            echo -e "$ERROR Unsupported script: ${2:-unkown}"; exit 1
+        fi
+    else
+        cat <<-EOF
+usage: cicd.sh [ script ] [ command ] [-t <type>] [-w <workspace>] [-e <extra>]
+
+Scripts: 
+${scripts//.sh}
+
+EOF
+    fi
+
+    exit
+fi
+
+# 平台参数检测
+is_exist=0;for script in `ls -l1 ${DIR}/scripts/`; do
+    if [[ $1 == $script ]]; then
+        is_exist=1
+    fi
+done
+if [[ $is_exist == 0 ]]; then
+    echo -e "$ERROR Unsupported script: ${1:-unkown}"; exit 1
+fi
+
+# 执行参数检测
+is_exist=0;for command in `ls -l1 ${DIR}/scripts/$1/`; do
+    if [[ $2.sh == $command ]]; then
+        is_exist=1
+    fi
+done
+if [[ $is_exist == 0 && -n $2 && ${2:0:1} == '-' ]]; then
+    ${DIR}/scripts/$1/${1}.sh $(echo $* | awk '$1="";1')
+    exit
+fi
+if [[ $is_exist == 0 && -n $2 ]]; then
+    echo -e "$ERROR Unsupported command: ${2:-unkown}"; exit 1
+fi
+
+${DIR}/scripts/$1/${2:-$1}.sh $(echo $* | awk '$1="";$2="";1')
